@@ -45,7 +45,7 @@ jobs:
       - name: Attach rpm to release
         uses: softprops/action-gh-release@v2
         with:
-          files: target/rpm/com.teragrep-example-name/RPMS/noarch/com.teragrep-kaf_07-*.noarch.rpm
+          files: target/rpm/com.teragrep-kaf_07/RPMS/noarch/com.teragrep-kaf_07-*.noarch.rpm
 
       - name: Update pkg_01 releases repository
         uses: teragrep/dfg_01@5.0.0
@@ -54,7 +54,7 @@ jobs:
           from_version: "${{ github.event.release.tag_name }}"
           to_repository: "${{ github.repository_owner }}/pkg_01"
           deploy_key: ${{ secrets.PKG_01_DEPLOY_KEY }}
-          files: target/rpm/com.teragrep-example-name/RPMS/noarch/com.teragrep-kaf_07-*.noarch.rpm
+          files: target/rpm/com.teragrep-kaf_07/RPMS/noarch/com.teragrep-kaf_07-*.noarch.rpm
           gpg_public_key: "${{ secrets.RPM_SIGNING_PUBLIC_KEY }}"
           repo_baseurl: "${{ vars.PKG_01_CENTRAL_BASEURL }}"
           location_prefix: "${{ vars.PKG_01_LOCATION_PREFIX }}"
