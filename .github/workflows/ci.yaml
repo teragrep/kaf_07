@@ -31,7 +31,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Build RPM and move RPM
-        run: mvn --batch-mode -Drevision=${{ github.run_id }} -Dsha1= -Dchangelist= package && find target/ -type f -name "*.rpm" -exec mv {} "src/test/${{ matrix.test }}/rpm/" \;
+        run: mvn --batch-mode -Drevision=${{ github.run_id }} -Dsha1= -Dchangelist= package && mv -v target/rpm/com.teragrep-kaf_07/RPMS/noarch/com.teragrep-kaf_07-*.noarch.rpm "src/test/${{ matrix.test }}/rpm/kaf_07.rpm";
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RPM_SIGNING_KEYNAME: ${{ env.RPM_SIGNING_KEYNAME }}
