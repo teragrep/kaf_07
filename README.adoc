@@ -12,7 +12,6 @@ Installs and configures link:https://github.com/teragrep/kaf_04[kaf_04], link:ht
 |===
 |Component
 |Version
-|Role
 
 |link:https://github.com/teragrep/kaf_04/[`kaf_04`]
 |link:https://github.com/teragrep/kaf_04/releases[7.0.2 or higher]
