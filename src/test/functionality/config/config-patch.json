@@ -1,0 +1,21 @@
+{
+  "kaf_06": {
+    "dirs": {
+      "logs": "/opt/teragrep/logs/kafka"
+    }
+  },
+  "kafka": {
+    "jmx": {
+      "broker":{
+        "enabled":true,
+        "port":"8003",
+        "password":"BrokerP4ssw0rd"
+      },
+      "controller":{
+        "enabled":false,
+        "port":"8004",
+        "password":"ControllerP4ssw0rd"
+      }
+    }
+  }
+}

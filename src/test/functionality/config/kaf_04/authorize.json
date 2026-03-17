@@ -1,0 +1,14 @@
+[
+  {
+    "group": "hdfs",
+    "allowedIndexes": [
+      "*"
+    ]
+  },
+  {
+    "group": "users",
+    "allowedIndexes": [
+      "users-*"
+    ]
+  }
+]
