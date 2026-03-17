@@ -1,0 +1,32 @@
+[Unit]
+Description=com.teragrep.kaf_06-controller
+ConditionPathExists={{{kaf_06.dirs.etc}}}/kafka-controller.properties
+ConditionPathExists={{{kaf_06.dirs.etc}}}/log4j-controller.properties
+ConditionPathExists={{{kaf_06.dirs.etc}}}/kafka.jaas.conf
+
+[Service]
+ExecStart=/opt/teragrep/kaf_06/bin/kafka-server-start.sh {{{kaf_06.dirs.etc}}}/kafka-controller.properties
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+OOMScoreAdjust=-500
+User=srv-kaf_07
+WorkingDirectory={{{kaf_06.dirs.workdir}}}
+Environment=KAFKA_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:G1HeapRegionSize=16M -XX:MinMetaspaceFreeRatio=50 -XX:MaxMetaspaceFreeRatio=80 -XX:+DisableExplicitGC -Djava.awt.headless=true"
+{{#kafka.authz.use_custom_jaas}}
+Environment=CLASSPATH={{{kaf_05.jar}}}
+{{/kafka.authz.use_custom_jaas}}
+{{^kafka.authz.use_custom_jaas}}
+Environment=CLASSPATH={{{kaf_04.jar}}}:{{{kaf_05.jar}}}
+{{/kafka.authz.use_custom_jaas}}
+Environment=KAFKA_OPTS=-Djava.security.auth.login.config={{{kaf_06.dirs.etc}}}/kafka.jaas.conf
+Environment=KAFKA_LOG4J_OPTS=-Dlog4j.configuration=file:{{{kaf_06.dirs.etc}}}/log4j-controller.properties
+Environment=KAFKA_HEAP_OPTS="{{{kafka.heap_opts}}}"
+Environment=KAFKA_GC_LOG_OPTS="-Xloggc:{{{kaf_06.dirs.logs}}}/{{{injected.role}}}/kafkaServer-gc.log -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=10M"
+{{#kafka.jmx.controller.enabled}}
+Environment=KAFKA_JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port={{{kafka.jmx.controller.port}}} -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.password.file={{{kaf_06.dirs.etc}}}/jmxremote-controller.password -Dcom.sun.management.jmxremote.access.file={{{kaf_06.dirs.etc}}}/jmxremote-controller.access"
+{{/kafka.jmx.controller.enabled}}
+
+[Install]
+WantedBy=multi-user.target

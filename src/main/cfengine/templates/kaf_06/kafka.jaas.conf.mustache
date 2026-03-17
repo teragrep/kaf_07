@@ -1,0 +1,23 @@
+KafkaServer {
+    com.sun.security.auth.module.Krb5LoginModule required
+    doNotPrompt=true
+    useKeyTab=true
+    storeKey=true
+    serviceName="{{{kaf_06.keytabs.principal}}}"
+    keyTab="{{{kaf_06.keytabs.path}}}"
+    principal="{{{kaf_06.keytabs.principal}}}/{{{fqdn}}}@{{{kaf_06.keytabs.domain}}}";
+};
+
+Client {
+    com.sun.security.auth.module.Krb5LoginModule required
+    doNotPrompt=true
+    useKeyTab=true
+    storeKey=true
+    serviceName="{{{kaf_06.keytabs.principal}}}"
+    keyTab="{{{kaf_06.keytabs.path}}}"
+    principal="{{{kaf_06.keytabs.principal}}}/{{{fqdn}}}@{{{kaf_06.keytabs.domain}}}";
+};
+
+KafkaClient {
+    com.teragrep.kaf_05.TeragrepAuthenticateCallbackHandler required;
+};

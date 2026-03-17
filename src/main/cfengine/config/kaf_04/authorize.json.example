@@ -1,0 +1,14 @@
+[
+  {
+    "group": "hdfs-admin",
+    "allowedIndexes": [
+      "*"
+    ]
+  },
+  {
+    "group": "hdfs-users",
+    "allowedIndexes": [
+      "user-topics-*"
+    ]
+  }
+]

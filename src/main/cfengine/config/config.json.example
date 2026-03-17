@@ -1,0 +1,113 @@
+{
+  "kaf_04": {
+    "dirs": {
+      "etc": "/opt/teragrep/kaf_04/etc"
+    },
+    "jar": "/opt/teragrep/kaf_04/share/kaf_04.jar"
+  },
+  "kaf_05": {
+    "dirs": {
+      "etc": "/opt/teragrep/kaf_05/etc"
+    },
+    "jar": "/opt/teragrep/kaf_05/share/kaf_05.jar"
+  },
+  "kaf_06": {
+    "dirs": {
+      "etc": "/opt/teragrep/kaf_06/config",
+      "logs": "/opt/teragrep/kaf_06/logs",
+      "workdir": "/opt/teragrep/kaf_06"
+    },
+    "keytabs": {
+      "path": "/opt/teragrep/kaf_06/config/kafka.keytab",
+      "principal": "kafka",
+      "domain": "EXAMPLE.COM"
+    }
+  },
+  "kafka": {
+    "identitySuffix": "@example.com",
+    "controllers": [
+      {
+        "hostname": "one.example.com",
+        "id": "201"
+      },
+      {
+        "hostname": "two.example.com",
+        "id": "202"
+      },
+      {
+        "hostname": "three.example.com",
+        "id": "203"
+      }
+    ],
+    "brokers": [
+      {
+        "hostname": "one.example.com",
+        "id": "101"
+      },
+      {
+        "hostname": "two.example.com",
+        "id": "102"
+      },
+      {
+        "hostname": "three.example.com",
+        "id": "103"
+      }
+    ],
+    "cluster": {
+      "id": "needs-to-be-generated"
+    },
+    "ports": {
+      "broker": "9093",
+      "controller": "9094"
+    },
+    "config": {
+      "default_replication_factor": "3",
+      "auto_create_topics_enable": "true",
+      "delete_topic_enable": "true",
+      "kafka_http_metrics_port": "24042",
+      "kafka_log4j_dir": "/opt/teragrep/kaf_06/logs",
+      "log_dirs": "/opt/teragrep/kafka/data",
+      "log_retention_bytes": "-1",
+      "log_retention_ms": "10800000",
+      "min_insync_replicas": "1",
+      "num_io_threads": "32",
+      "num_network_threads": "32",
+      "num_partitions": "3",
+      "num_recovery_threads_per_data_dir": "1",
+      "num_replica_fetchers": "4",
+      "offsets_topic_num_partitions": "50",
+      "offsets_topic_replication_factor": "3",
+      "replica_fetch_max_bytes": "1048576",
+      "replica_lag_time_max_ms": "10000",
+      "log_segment_bytes": "1073741824",
+      "retry_backoff_ms": "100",
+      "retry_backoff_max_ms": "1000"
+    },
+    "credentials": {
+      "cluster": {
+        "password": "kafkaadminpassword"
+      },
+      "writer": {
+        "username": "kafkawriter",
+        "password": "kafkawriterpassword"
+      }
+    },
+    "heap_opts": "-Xmx1G -Xms1G",
+    "authz": {
+      "use_custom_jaas": false,
+      "custom_jaas": "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"admin\" password=\"admin-pass\" user_username=\"userpass\""
+    },
+    "jmx": {
+      "broker": {
+        "enabled": false,
+        "port": "8003",
+        "password": "brokerJMXP4ssw0rd"
+      },
+      "controller": {
+        "enabled": false,
+        "port": "8004",
+        "password": "controllerJMXP4ssw0rd"
+      }
+    }
+  }
+}
