@@ -1,17 +1,27 @@
-// Before publishing your new repository:
-// 1. Write the readme file
-// 2. Update the issues link in Contributing section in the readme file
-// 3. Update the discussion link in config.yml file in .github/ISSUE_TEMPLATE directory
+= kaf_07: Secure Kafka 3.X Cluster Installer for CFEngine
 
-= repo-template
-
-// Add a short description of your project. Tell what your project does and what it's used for.
-
-This is a template repository for Teragrep organization.
+Creates and configures secure by default Apache Kafka 3.x cluster.
 
 == Features
 
-// List your project's features
+Installs and configures link:https://github.com/teragrep/kaf_04[kaf_04], link:https://github.com/teragrep/kaf_05[kaf_05] and link:https://github.com/teragrep/kaf_06[kaf_06] to create a secure by default Apache Kafka cluster.
+
+== Component support
+
+[%header,cols="1,1"]
+|===
+|Component
+|Version
+
+|link:https://github.com/teragrep/kaf_04/[`kaf_04`]
+|link:https://github.com/teragrep/kaf_04/releases[7.0.2 or higher]
+
+|link:https://github.com/teragrep/kaf_05/[`kaf_05`]
+|link:https://github.com/teragrep/kaf_05/releases[7.0.2 or higher]
+
+|link:https://github.com/teragrep/kaf_06[`kaf_06`]
+|link:https://github.com/teragrep/kaf_06/releases/tag/3.9.6[3.9.6 or higher]
+|===
 
 == Documentation
 
@@ -19,17 +29,25 @@ See the official documentation on https://docs.teragrep.com[docs.teragrep.com].
 
 == Limitations
 
-// If your project has limitations, please list them. Otherwise remove this section.
+No automatic process handling by design, use systemctl to restart when appropriate.
 
-== How to [compile/use/implement]
+Keytabs are not automatically generated, delivered or managed. They must be provided via other routes on each of the nodes.
 
-// add instructions how people can start to use your project
+== How to use
+
+Move `config/config.json.example` to `config/config.json`.
+
+You can set a new `kafka.cluster.id` with `jq --arg cluster_id "$(tr -d '-' < /proc/sys/kernel/random/uuid | base64 | cut -b 1-22)" '.kafka.cluster.id=$cluster_id' config.json`
+
+Set `.kafka.controllers` and `.kafka.brokers` to contain the hostnames where certain roles are wanted and unique id for each.
+
+Set `.kaf_06.keytabs` keys to valid values where keytabs can be found and read by `srv-kaf_07` user.
+
+Add `kaf_04.rpm`, `kaf_05.rpm` and `kaf_06.rpm` to `rpm/` directory.
 
 == Contributing
 
-// Change the repository name in the issues link to match with your project's name
-
-You can involve yourself with our project by https://github.com/teragrep/repo-template/issues/new/choose[opening an issue] or submitting a pull request.
+You can involve yourself with our project by https://github.com/teragrep/kaf_07/issues/new/choose[opening an issue] or submitting a pull request.
 
 Contribution requirements:
 

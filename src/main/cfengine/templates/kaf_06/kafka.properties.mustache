@@ -1,0 +1,91 @@
+auto.create.topics.enable={{{kafka.config.auto_create_topics_enable}}}
+auto.leader.rebalance.enable=true
+controlled.shutdown.enable=true
+controlled.shutdown.max.retries=3
+default.replication.factor={{{kafka.config.default_replication_factor}}}
+delete.topic.enable={{{kafka.config.delete_topic_enable}}}
+kafka.http.metrics.host=0.0.0.0
+kafka.http.metrics.port={{{kafka.config.kafka_http_metrics_port}}}
+kafka.log4j.dir={{{kafka.config.kafka_log4j_dir}}}
+leader.imbalance.check.interval.seconds=300
+leader.imbalance.per.broker.percentage=10
+message.max.bytes=1000000
+min.insync.replicas={{{kafka.config.min_insync_replicas}}}
+num.io.threads={{{kafka.config.num_io_threads}}}
+num.network.threads=32
+num.partitions={{{kafka.config.num_partitions}}}
+num.recovery.threads.per.data.dir={{{kafka.config.num_recovery_threads_per_data_dir}}}
+num.replica.fetchers={{{kafka.config.num_replica_fetchers}}}
+offsets.topic.num.partitions={{{kafka.config.offsets_topic_num_partitions}}}
+offsets.topic.replication.factor={{{kafka.config.offsets_topic_replication_factor}}}
+port={{{injected.port}}}
+replica.fetch.max.bytes={{{kafka.config.replica_fetch_max_bytes}}}
+replica.lag.time.max.ms={{{kafka.config.replica_lag_time_max_ms}}}
+sentry.kafka.caching.enable=true
+sentry.kafka.caching.ttl.ms=30000
+sentry.kafka.caching.update.failures.count=3
+unclean.leader.election.enable=false
+super.users=User:{{{kaf_06.keytabs.principal}}}
+
+# KRaft
+node.id={{{injected.id}}}
+process.roles={{{injected.role}}}
+controller.quorum.bootstrap.servers={{{injected.bootstrap}}}
+controller.quorum.voters={{{injected.voters}}}
+controller.listener.names=CONTROLLER
+inter.broker.listener.name=BROKER
+security.protocol=SASL_PLAINTEXT
+listener.security.protocol.map=CONTROLLER:SASL_PLAINTEXT,BROKER:SASL_PLAINTEXT
+{{#injected.isbroker}}
+listeners=BROKER://:{{{injected.port}}}
+advertised.listeners=BROKER://:{{{injected.port}}}
+{{/injected.isbroker}}
+{{^injected.isbroker}}
+listeners=CONTROLLER://:{{{injected.port}}}
+advertised.listeners=CONTROLLER://:{{{injected.port}}}
+{{/injected.isbroker}}
+listener.name.broker.plain.sasl.client.callback.handler.class=com.teragrep.kaf_05.TeragrepAuthenticateCallbackHandler
+listener.name.broker.plain.sasl.login.callback.handler.class=com.teragrep.kaf_05.TeragrepAuthenticateCallbackHandler
+listener.name.broker.plain.sasl.server.callback.handler.class=com.teragrep.kaf_05.TeragrepAuthenticateCallbackHandler
+listener.name.controller.plain.sasl.client.callback.handler.class=com.teragrep.kaf_05.TeragrepAuthenticateCallbackHandler
+listener.name.controller.plain.sasl.login.callback.handler.class=com.teragrep.kaf_05.TeragrepAuthenticateCallbackHandler
+listener.name.controller.plain.sasl.server.callback.handler.class=com.teragrep.kaf_05.TeragrepAuthenticateCallbackHandler
+
+# Authz
+{{^kafka.authz.use_custom_jaas}}
+# Using teragrep authz
+authorizer.class.name=com.teragrep.kaf_04.TeragrepKafkaAuthorizer
+teragrep.kaf_04.authorize.file={{{kaf_04.dirs.etc}}}/authorize.json
+teragrep.kaf_04.writer.file={{{kaf_04.dirs.etc}}}/writer.json
+teragrep.kaf_04.cluster.file={{{kaf_04.dirs.etc}}}/cluster.json
+teragrep.kaf_04.identitySuffix.file={{{kaf_04.dirs.etc}}}/identitySuffix.json
+listener.name.broker.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required credentials.file="{{{kaf_05.dirs.etc}}}/credentials.json" cluster.file="{{{kaf_05.dirs.etc}}}/credentials.cluster.json" writer.file="{{{kaf_05.dirs.etc}}}/credentials.writer.json" identitySuffix.file="{{{kaf_05.dirs.etc}}}/identitySuffix.json";
+listener.name.controller.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required credentials.file="{{{kaf_05.dirs.etc}}}/credentials.json" cluster.file="{{{kaf_05.dirs.etc}}}/credentials.cluster.json" writer.file="{{{kaf_05.dirs.etc}}}/credentials.writer.json" identitySuffix.file="{{{kaf_05.dirs.etc}}}/identitySuffix.json";
+{{/kafka.authz.use_custom_jaas}}
+{{#kafka.authz.use_custom_jaas}}
+# Using internal authz
+listener.name.broker.plain.sasl.jaas.config={{{kafka.authz.custom_jaas}}} credentials.file="{{{kaf_05.dirs.etc}}}/credentials.json" cluster.file="{{{kaf_05.dirs.etc}}}/credentials.cluster.json" writer.file="{{{kaf_05.dirs.etc}}}/credentials.writer.json" identitySuffix.file="{{{kaf_05.dirs.etc}}}/identitySuffix.json";
+listener.name.controller.plain.sasl.jaas.config={{{kafka.authz.custom_jaas}}} credentials.file="{{{kaf_05.dirs.etc}}}/credentials.json" cluster.file="{{{kaf_05.dirs.etc}}}/credentials.cluster.json" writer.file="{{{kaf_05.dirs.etc}}}/credentials.writer.json" identitySuffix.file="{{{kaf_05.dirs.etc}}}/identitySuffix.json";
+{{/kafka.authz.use_custom_jaas}}
+
+# Security
+sasl.enabled.mechanisms=PLAIN,GSSAPI
+sasl.kerberos.service.name={{{kaf_06.keytabs.principal}}}
+sasl.mechanism.inter.broker.protocol=GSSAPI
+sasl.mechanism.controller.protocol=GSSAPI
+sasl.mechanism=PLAIN
+
+# Logs
+log.cleaner.dedupe.buffer.size=134217728
+log.cleaner.delete.retention.ms=10800000
+log.cleaner.enable=true
+log.cleaner.min.cleanable.ratio=0.5
+log.cleaner.threads=1
+log.dirs={{{kafka.config.log_dirs}}}/{{{injected.role}}}
+log.retention.bytes={{{kafka.config.log_retention_bytes}}}
+log.retention.check.interval.ms=300000
+log.retention.ms={{{kafka.config.log_retention_ms}}}
+log.segment.bytes={{{kafka.config.log_segment_bytes}}}
+
+retry.backoff.ms={{{kafka.config.retry_backoff_ms}}}
+retry.backoff.max.ms={{{kafka.config.retry_backoff_max_ms}}}

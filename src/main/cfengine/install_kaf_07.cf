@@ -1,0 +1,665 @@
+# Secure Kafka 3.X Cluster Installer (kaf_07) for CFEngine
+# Copyright (C) 2026 Suomen Kanuuna Oy
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#
+# Additional permission under GNU Affero General Public License version 3
+# section 7
+#
+# If you modify this Program, or any covered work, by linking or combining it
+# with other code, such other code is not for that reason alone subject to any
+# of the requirements of the GNU Affero GPL version 3 as long as this Program
+# is the same Program as licensed from Suomen Kanuuna Oy without any additional
+# modifications.
+#
+# Supplemented terms under GNU Affero General Public License version 3
+# section 7
+#
+# Origin of the software must be attributed to Suomen Kanuuna Oy. Any modified
+# versions must be marked as "Modified version of" The Program.
+#
+# Names of the licensors and authors may not be used for publicity purposes.
+#
+# No rights are granted for use of trade names, trademarks, or service marks
+# which are in The Program if any.
+#
+# Licensee must indemnify licensors and authors for any liability that these
+# contractual assumptions impose on licensors and authors.
+#
+# To the extent this program is licensed as part of the Commercial versions of
+# Teragrep, the applicable Commercial License may apply to this file if you as
+# a licensee so wish it.
+#
+
+body file control
+{
+        namespace => "install_kaf_07";
+}
+
+#
+# Main handlers
+#
+
+bundle agent install_kaf_07 {
+  classes:
+      "kaf_04_exists" expression => "any",
+        if => fileexists("$(this.promise_dirname)/rpm/kaf_04.rpm");
+      "kaf_04_authorize_exists" expression => "any",
+        if => fileexists("$(this.promise_dirname)/config/kaf_04/authorize.json");
+      "kaf_05_exists" expression => "any",
+        if => fileexists("$(this.promise_dirname)/rpm/kaf_05.rpm");
+      "kaf_05_credentials_exists" expression => "any",
+        if => fileexists("$(this.promise_dirname)/config/kaf_05/credentials.json");
+      "kaf_06_exists" expression => "any",
+        if => fileexists("$(this.promise_dirname)/rpm/kaf_06.rpm");
+      "config_exists" expression => "any",
+        if => fileexists("$(this.promise_dirname)/config/config.json");
+  methods:
+      "any" usebundle => install_handler,
+        if => and(
+                   "kaf_04_exists",
+                   "kaf_04_authorize_exists",
+                   "kaf_05_exists",
+                   "kaf_05_credentials_exists",
+                   "kaf_06_exists",
+                   "config_exists"
+        );
+  reports:
+      "[ERROR] Missing $(this.promise_dirname)/rpm/kaf_04.rpm" if => not("kaf_04_exists");
+      "[ERROR] Missing $(this.promise_dirname)/config/kaf_04/authorize.json" if => not("kaf_04_authorize_exists");
+      "[ERROR] Missing $(this.promise_dirname)/rpm/kaf_05.rpm" if => not("kaf_05_exists");
+      "[ERROR] Missing $(this.promise_dirname)/config/kaf_05/credentials.json" if => not("kaf_05_credentials_exists");
+      "[ERROR] Missing $(this.promise_dirname)/rpm/kaf_06.rpm" if => not("kaf_06_exists");
+      "[ERROR] Missing $(this.promise_dirname)/config/config.json" if => not("config_exists");
+}
+
+bundle agent install_handler {
+  vars:
+      "config_plain" data => readdata("$(this.promise_dirname)/config/config.json", "JSON"),
+        if => fileexists("$(this.promise_dirname)/config/config.json");
+      "config" data => mergedata(@(config_plain), '{"fqdn": "$(sys.fqhost)"}');
+  methods:
+      "kaf_04" usebundle => install_kaf_04(@(config));
+      "kaf_05" usebundle => install_kaf_05(@(config));
+      "kaf_06" usebundle => install_kaf_06(@(config));
+  reports:
+      "[ERROR] Failed to parse config"
+        if => or(
+                  not(isvariable("config_plain")),
+                  not(isvariable("config"))
+        );
+
+}
+
+#
+# Generic RPM installer bundle
+#
+
+bundle agent install_rpm(rpm) {
+  vars:
+      "$(rpm)_version" string => execresult("/bin/rpm -qp $(this.promise_dirname)/rpm/$(rpm).rpm", "noshell"),
+        handle => "$(rpm)_version_check_done",
+        if => fileexists("$(this.promise_dirname)/rpm/$(rpm).rpm");
+  classes:
+      "$(rpm)_installed" expression => returnszero("/bin/rpm --quiet -q $($(rpm)_version)", "noshell"),
+        handle => "$(rpm)_installed_check_done",
+        depends_on => { "$(rpm)_version_check_done" },
+        scope => "namespace";
+  commands:
+      "/usr/bin/yum -y install $(this.promise_dirname)/rpm/$(rpm).rpm"
+        if => not("$(rpm)_installed"),
+        depends_on => { "$(rpm)_installed_check_done" },
+        classes => if_ok("$(rpm)_install_ok");
+  reports:
+      "[ERROR] Can't install rpm $(this.promise_dirname)/rpm/$(rpm).rpm"
+        if => and(
+                   not("$(rpm)_installed"),
+                   not("$(rpm)_install_ok")
+        );
+}
+
+#
+# Bodies for use
+#
+
+body classes if_ok(class) {
+        promise_kept => { "$(class)" };
+        promise_repaired => { "$(class)" };
+        scope => "namespace";
+}
+
+body perms set_perms(user, group, mode) {
+        mode => "$(mode)";
+        owners => { "$(user)" };
+        groups => { "$(group)" };
+        rxdirs => "true";
+}
+
+body copy_from copy(source)  {
+        source => "$(source)";
+}
+
+body classes if_repaired(class) {
+        promise_repaired => { "$(class)" };
+        scope => "namespace";
+}
+
+#
+# Install kaf_04
+#
+
+bundle agent install_kaf_04(config) {
+  methods:
+      "any" usebundle => install_rpm("kaf_04"),
+        classes => if_repaired("kaf_04_repaired");
+  files:
+      "$(config[kaf_04][dirs][etc])/."
+        create => "true",
+        if => or(
+                  "kaf_04_installed",
+                  "kaf_04_install_ok"
+        ),
+        classes => if_repaired("kaf_04_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "750");
+      "$(config[kaf_04][dirs][etc])/authorize.json"
+        copy_from => copy("$(this.promise_dirname)/config/kaf_04/authorize.json"),
+        if => and(
+                   isdir("$(config[kaf_04][dirs][etc])/"),
+                   or(
+                       "kaf_04_installed",
+                       "kaf_04_install_ok"
+                   )
+        ),
+        classes => if_repaired("kaf_04_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "$(config[kaf_04][dirs][etc])/cluster.json"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_04/cluster.json.mustache",
+        template_method => "mustache",
+        template_data => @(config),
+        if => and(
+                   isdir("$(config[kaf_04][dirs][etc])/"),
+                   or(
+                       "kaf_04_installed",
+                       "kaf_04_install_ok"
+                   )
+        ),
+        classes => if_repaired("kaf_04_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "$(config[kaf_04][dirs][etc])/identitySuffix.json"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_04/identitySuffix.json.mustache",
+        template_method => "mustache",
+        template_data => @(config),
+        if => and(
+                   isdir("$(config[kaf_04][dirs][etc])/"),
+                   or(
+                       "kaf_04_installed",
+                       "kaf_04_install_ok"
+                   )
+        ),
+        classes => if_repaired("kaf_04_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "$(config[kaf_04][dirs][etc])/writer.json"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_04/writer.json.mustache",
+        template_method => "mustache",
+        template_data => @(config),
+        if => and(
+                   isdir("$(config[kaf_04][dirs][etc])/"),
+                   or(
+                       "kaf_04_installed",
+                       "kaf_04_install_ok"
+                   )
+        ),
+        classes => if_repaired("kaf_04_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+  reports:
+      "[ERROR] kaf_04 was not properly installed"
+        if => and(
+                  not("kaf_04_installed"),
+                  not("kaf_04_install_ok")
+        );
+      "[INFO] kaf_04 install changed, please restart service(s)"
+        if => "kaf_04_repaired";
+}
+
+#
+# Install kaf_05
+#
+
+bundle agent install_kaf_05(config) {
+  methods:
+      "any" usebundle => install_rpm("kaf_05"),
+        classes => if_repaired("kaf_05_repaired");
+  files:
+      "$(config[kaf_05][dirs][etc])/."
+        create => "true",
+        if => or(
+                  "kaf_05_installed",
+                  "kaf_05_install_ok"
+        ),
+        classes => if_repaired("kaf_05_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "750");
+      "$(config[kaf_05][dirs][etc])/credentials.json"
+        copy_from => copy("$(this.promise_dirname)/config/kaf_05/credentials.json"),
+        if => and(
+                   isdir("$(config[kaf_05][dirs][etc])/"),
+                   or(
+                       "kaf_05_installed",
+                       "kaf_05_install_ok"
+                   )
+        ),
+        classes => if_repaired("kaf_05_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "$(config[kaf_05][dirs][etc])/credentials.writer.json"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_05/credentials.writer.json.mustache",
+        template_method => "mustache",
+        template_data => @(config),
+        if => and(
+                   isdir("$(config[kaf_05][dirs][etc])/"),
+                   or(
+                       "kaf_05_installed",
+                       "kaf_05_install_ok"
+                   )
+        ),
+        classes => if_repaired("kaf_05_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "$(config[kaf_05][dirs][etc])/credentials.cluster.json"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_05/credentials.cluster.json.mustache",
+        template_method => "mustache",
+        template_data => @(config),
+        if => and(
+                   isdir("$(config[kaf_05][dirs][etc])/"),
+                   or(
+                       "kaf_05_installed",
+                       "kaf_05_install_ok"
+                   )
+        ),
+        classes => if_repaired("kaf_05_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "$(config[kaf_05][dirs][etc])/identitySuffix.json"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_05/identitySuffix.json.mustache",
+        template_method => "mustache",
+        template_data => @(config),
+        if => and(
+                   isdir("$(config[kaf_05][dirs][etc])/"),
+                   or(
+                       "kaf_05_installed",
+                       "kaf_05_install_ok"
+                   )
+        ),
+        classes => if_repaired("kaf_05_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+  reports:
+      "[ERROR] kaf_05 was not properly installed"
+        if => and(
+                  not("kaf_05_installed"),
+                  not("kaf_05_install_ok")
+        );
+      "[INFO] kaf_05 install changed, please restart service(s)"
+        if => "kaf_05_repaired";
+}
+
+#
+# Install kaf_06
+#
+
+bundle agent install_kaf_06(config) {
+  methods:
+      "any" usebundle => install_rpm("kaf_06"),
+        classes => if_repaired("kaf_06_repaired");
+  vars:
+      # iterators
+      "controllers" slist => getindices("config[kafka][controllers]");
+      "brokers" slist => getindices("config[kafka][brokers]");
+
+      # Common
+      "bootstrap[$(controllers)]" string => "$(config[kafka][controllers][$(controllers)][hostname]):$(config[kafka][ports][controller])";
+      "bootstrapstring" string => join(",", bootstrap);
+      "voters[$(controllers)]" string => "$(config[kafka][controllers][$(controllers)][id])@$(config[kafka][controllers][$(controllers)][hostname]):$(config[kafka][ports][controller])";
+      "votersstring" string => join(",", voters);
+
+      # Handle controller-specific data
+      "controllerid" string => "$(config[kafka][controllers][$(controllers)][id])",
+        if => strcmp("$(config[kafka][controllers][$(controllers)][hostname])", "$(sys.fqhost)");
+      "controllerdata" data => mergedata(@(config), '{"injected": { "id": "$(controllerid)", "port": "$(config[kafka][ports][controller])", "isbroker": false, "voters": "$(votersstring)", "bootstrap": "$(bootstrapstring)", "role": "controller", "jmxpassword": "$(config[kafka][jmx][controller][password])" } }'),
+        if => isvariable("controllerid");
+
+      # Handle broker-specific data
+      "brokerid" string => "$(config[kafka][brokers][$(brokers)][id])",
+        if => strcmp("$(config[kafka][brokers][$(brokers)][hostname])", "$(sys.fqhost)");
+      "brokerdata" data => mergedata(@(config), '{"injected": { "id": "$(brokerid)", "port": "$(config[kafka][ports][broker])", "isbroker": true, "voters": "$(votersstring)", "bootstrap": "$(bootstrapstring)", "role": "broker", "jmxpassword": "$(config[kafka][jmx][broker][password])" } }'),
+        if => isvariable("brokerid");
+  files:
+      # Common configuration for both roles
+      "$(config[kaf_06][dirs][logs])/."
+        create => "true",
+        if => or(
+                  "kaf_06_installed",
+                  "kaf_06_install_ok"
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "750");
+      "$(config[kaf_06][dirs][etc])/."
+        create => "true",
+        if => or(
+                  "kaf_06_installed",
+                  "kaf_06_install_ok"
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "750");
+      "$(config[kaf_06][dirs][workdir])/."
+        create => "true",
+        if => or(
+                  "kaf_06_installed",
+                  "kaf_06_install_ok"
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "750");
+      "$(config[kaf_06][dirs][etc])/kafka.jaas.conf"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_06/kafka.jaas.conf.mustache",
+        template_method => "mustache",
+        template_data => @(config),
+        if => and(
+                   isdir("$(config[kaf_06][dirs][etc])/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   )
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "$(config[kafka][config][log_dirs])/."
+        create => "true",
+        if => and(
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   )
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "750");
+      # Broker related files
+      "$(config[kaf_06][dirs][etc])/kafka-broker.properties"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_06/kafka.properties.mustache",
+        template_method => "mustache",
+        template_data => @(brokerdata),
+        if => and(
+                   isdir("$(config[kaf_06][dirs][etc])/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   isvariable("brokerdata")
+        ),
+        classes => if_repaired("kaf_06_broker_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "$(config[kafka][config][log_dirs])/broker/."
+        create => "true",
+        if => and(
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   isvariable("brokerdata")
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "750");
+      "$(config[kafka][config][log_dirs])/broker/meta.properties"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_06/meta.properties.mustache",
+        template_method => "mustache",
+        template_data => @(brokerdata),
+        if => and(
+                   isdir("$(config[kafka][config][log_dirs])/broker/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   isvariable("brokerdata"),
+                   not(fileexists("$(config[kafka][config][log_dirs])/broker/meta.properties"))
+        ),
+        classes => if_repaired("kaf_06_controller_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "/usr/lib/systemd/system/kaf_06-broker.service"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_06/kaf_06-broker.service.mustache",
+        template_method => "mustache",
+        template_data => @(brokerdata),
+        if => and(
+                   isdir("$(config[kaf_06][dirs][etc])/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   isvariable("brokerdata")
+        ),
+        classes => if_repaired("kaf_06_controller_service_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "$(config[kaf_06][dirs][etc])/log4j-broker.properties"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_06/log4j.properties.mustache",
+        template_method => "mustache",
+        template_data => @(brokerdata),
+        if => and(
+                   isdir("$(config[kaf_06][dirs][etc])/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   not(fileexists("$(config[kaf_06][dirs][etc])/log4j-broker.properties")),
+                   isvariable("brokerdata")
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "$(config[kaf_06][dirs][logs])/broker/."
+        create => "true",
+        if => and(
+                   isdir("$(config[kaf_06][dirs][logs])/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   isvariable("brokerdata")
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "750");
+      # Broker JMX related files
+      "$(config[kaf_06][dirs][etc])/jmxremote-broker.access"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_06/jmxremote.access.mustache",
+        template_method => "mustache",
+        template_data => @(brokerdata),
+        if => and(
+                   isdir("$(config[kaf_06][dirs][etc])/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   strcmp("$(config[kafka][jmx][broker][enabled])", "true"),
+                   isvariable("brokerdata")
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "600");
+      "$(config[kaf_06][dirs][etc])/jmxremote-broker.password"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_06/jmxremote.password.mustache",
+        template_method => "mustache",
+        template_data => @(brokerdata),
+        if => and(
+                   isdir("$(config[kaf_06][dirs][etc])/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   strcmp("$(config[kafka][jmx][broker][enabled])", "true"),
+                   isvariable("brokerdata")
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "600");
+      # Controller related files
+      "$(config[kaf_06][dirs][etc])/kafka-controller.properties"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_06/kafka.properties.mustache",
+        template_method => "mustache",
+        template_data => @(controllerdata),
+        if => and(
+                   isdir("$(config[kaf_06][dirs][etc])/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   isvariable("controllerdata")
+        ),
+        classes => if_repaired("kaf_06_controller_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "$(config[kafka][config][log_dirs])/controller/."
+        create => "true",
+        if => and(
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   isvariable("controllerdata")
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "750");
+      "$(config[kafka][config][log_dirs])/controller/meta.properties"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_06/meta.properties.mustache",
+        template_method => "mustache",
+        template_data => @(controllerdata),
+        if => and(
+                   isdir("$(config[kafka][config][log_dirs])/controller/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   isvariable("controllerdata"),
+                   not(fileexists("$(config[kafka][config][log_dirs])/controller/meta.properties"))
+        ),
+        classes => if_repaired("kaf_06_controller_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "/usr/lib/systemd/system/kaf_06-controller.service"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_06/kaf_06-controller.service.mustache",
+        template_method => "mustache",
+        template_data => @(controllerdata),
+        if => and(
+                   isdir("$(config[kaf_06][dirs][etc])/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   isvariable("controllerdata")
+        ),
+        classes => if_repaired("kaf_06_controller_service_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "$(config[kaf_06][dirs][etc])/log4j-controller.properties"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_06/log4j.properties.mustache",
+        template_method => "mustache",
+        template_data => @(controllerdata),
+        if => and(
+                   isdir("$(config[kaf_06][dirs][etc])/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   not(fileexists("$(config[kaf_06][dirs][etc])/log4j-controller.properties")),
+                   isvariable("controllerdata")
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "640");
+      "$(config[kaf_06][dirs][logs])/controller/."
+        create => "true",
+        if => and(
+                   isdir("$(config[kaf_06][dirs][logs])/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   isvariable("controllerdata")
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "750");
+      # Controller JMX related files
+      "$(config[kaf_06][dirs][etc])/jmxremote-controller.access"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_06/jmxremote.access.mustache",
+        template_method => "mustache",
+        template_data => @(controllerdata),
+        if => and(
+                   isdir("$(config[kaf_06][dirs][etc])/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   strcmp("$(config[kafka][jmx][controller][enabled])", "true"),
+                   isvariable("controllerdata")
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "600");
+      "$(config[kaf_06][dirs][etc])/jmxremote-controller.password"
+        create => "true",
+        edit_template => "$(this.promise_dirname)/templates/kaf_06/jmxremote.password.mustache",
+        template_method => "mustache",
+        template_data => @(controllerdata),
+        if => and(
+                   isdir("$(config[kaf_06][dirs][etc])/"),
+                   or(
+                       "kaf_06_installed",
+                       "kaf_06_install_ok"
+                   ),
+                   strcmp("$(config[kafka][jmx][controller][enabled])", "true"),
+                   isvariable("controllerdata")
+        ),
+        classes => if_repaired("kaf_06_repaired"),
+        perms => set_perms("srv-kaf_07", "srv-kaf_07", "600");
+  reports:
+      "[ERROR] kaf_06 was not properly installed"
+        if => and(
+                  not("kaf_06_installed"),
+                  not("kaf_06_install_ok")
+        );
+      "[INFO] kaf_06 generic files changed, please restart service(s)"
+        if => "kaf_06_repaired";
+      "[INFO] kaf_06 broker files changed, please restart broker service"
+        if => or(
+                  "kaf_06_broker_repaired",
+                  "kaf_06_broker_service_repaired"
+        );
+      "[INFO] kaf_06 controller files changed, please restart controller service"
+        if => or(
+                  "kaf_06_controller_repaired",
+                  "kaf_06_controller_service_repaired"
+        );
+      "[INFO] kaf_06 systemd service(s) changed, please run 'systemctl daemon-reload' to get new settings"
+        if => or(
+                  "kaf_06_broker_service_repaired",
+                  "kaf_06_controller_service_repaired"
+        );
+      "[WARNING] Couldn't determine whether this host was a broker or a controller"
+        if => and(
+                   not(isvariable("brokerdata")),
+                   not(isvariable("controllerdata"))
+        );
+}
