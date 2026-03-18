@@ -37,11 +37,8 @@ jobs:
           RPM_SIGNING_KEYNAME: ${{ env.RPM_SIGNING_KEYNAME }}
           RPM_SIGNING_PASSPHRASE: ${{ secrets.RPM_SIGNING_PASSPHRASE }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2.5.0
-
       - name: Build test image
-        run: cd "src/test/${{ matrix.test }}/" && docker buildx build --output type=docker --tag "${{ matrix.test }}:latest" .
+        run: cd "src/test/${{ matrix.test }}/" && podman build --tag "${{ matrix.test }}:latest" .
 
       - name: Run test
-        run: docker run --interactive "${{ matrix.test }}:latest"
+        run: podman run --interactive "${{ matrix.test }}:latest"
