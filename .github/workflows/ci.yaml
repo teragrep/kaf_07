@@ -1,0 +1,44 @@
+name: CI
+
+on: [ push ]
+
+jobs:
+  upload:
+    name: CI
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test: ["default-authz", "functionality", "missing-config", "upgrade"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare RPM GPG signing
+        run: |
+          sudo apt-get install expect pinentry-tty;
+          printf "RPM_SIGNING_KEYNAME=%q\n" "$(echo "${{ secrets.RPM_SIGNING_PUBLIC_KEY }}" | gpg --show-keys --with-colons | awk -F':' '/uid/{print $10}')" >> $GITHUB_ENV;
+          echo "${{ secrets.RPM_SIGNING_PRIVATE_KEY }}" | gpg --batch --import;
+          echo "%_gpg_sign_cmd_extra_args --pinentry-mode loopback --passphrase \"%{getenv:RPM_SIGNING_PASSPHRASE}\"" >> "${HOME}/.rpmmacros";
+
+      - name: Download dependencies
+        run: |
+          mkdir -p "src/test/${{ matrix.test }}/rpm/";
+          for package in kaf_04 kaf_05 kaf_06; do
+            gh release download --repo "teragrep/${package}" --output "src/test/${{ matrix.test }}/rpm/${package}.rpm" --pattern "*.rpm"
+          done;
+          wget https://cfengine-package-repos.s3.amazonaws.com/pub/yum/x86_64/cfengine-community-3.21.3-1.el7.x86_64.rpm -O "src/test/${{ matrix.test }}/rpm/cfengine.rpm"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Build RPM and move RPM
+        run: mvn --batch-mode -Drevision=${{ github.run_id }} -Dsha1= -Dchangelist= package && mv -v target/rpm/com.teragrep-kaf_07/RPMS/noarch/com.teragrep-kaf_07-*.noarch.rpm "src/test/${{ matrix.test }}/rpm/kaf_07.rpm";
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RPM_SIGNING_KEYNAME: ${{ env.RPM_SIGNING_KEYNAME }}
+          RPM_SIGNING_PASSPHRASE: ${{ secrets.RPM_SIGNING_PASSPHRASE }}
+
+      - name: Build test image
+        run: cd "src/test/${{ matrix.test }}/" && podman build --tag "${{ matrix.test }}:latest" .
+
+      - name: Run test
+        run: podman run --interactive "${{ matrix.test }}:latest"

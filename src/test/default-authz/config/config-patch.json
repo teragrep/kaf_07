@@ -1,0 +1,8 @@
+{
+  "kafka": {
+    "authz": {
+      "use_custom_jaas": true,
+      "custom_jaas": "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"custom-admin\" password=\"custom-admin-pass\" user_custom-user=\"custom-user-pass\""
+    }
+  }
+}
