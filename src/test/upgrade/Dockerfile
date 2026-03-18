@@ -3,11 +3,11 @@ FROM rockylinux/rockylinux:9
 # Install dependencies
 COPY rpm/cfengine.rpm /cfengine.rpm
 COPY rpm/kaf_07.rpm /kaf_07.rpm
-RUN dnf -y install /cfengine.rpm /kaf_07.rpm jq nmap-ncat
+RUN dnf -y install /cfengine.rpm /kaf_07.rpm jq nmap-ncat rpm-build
 
-# Install dummy packages for upgrading
-COPY dummy/*.rpm /dummy/
-RUN dnf install -y /dummy/*.rpm
+# Create dummy packages for upgrading
+COPY create_dummy_packages.sh /dummy/
+RUN cd /dummy/ && ./create_dummy_packages.sh && dnf install -y *.rpm
 
 # Install kaf_07
 COPY rpm/kaf_07.rpm /kaf_07.rpm
