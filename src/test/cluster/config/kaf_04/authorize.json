@@ -1,0 +1,14 @@
+[
+  {
+    "group": "kafka-admins",
+    "allowedIndexes": [
+      "*"
+    ]
+  },
+  {
+    "group": "kafka-users",
+    "allowedIndexes": [
+      "users-*"
+    ]
+  }
+]

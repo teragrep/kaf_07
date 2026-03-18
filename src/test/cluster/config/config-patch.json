@@ -1,0 +1,66 @@
+{
+  "kaf_06": {
+    "keytabs": {
+      "domain": "KAFKA3-CLUSTER.DEV.TEST"
+    }
+  },
+  "kafka": {
+    "cluster": {
+      "id": "ZmRjYjk3YTE4YWQ4NDE1NW"
+    },
+    "brokers": [
+      {
+        "hostname": "broker-one.kafka3-cluster.dev.test",
+        "id": "101"
+      },
+      {
+        "hostname": "combined-two.kafka3-cluster.dev.test",
+        "id": "102"
+      },
+      {
+        "hostname": "combined-three.kafka3-cluster.dev.test",
+        "id": "103"
+      }
+    ],
+    "controllers": [
+      {
+        "hostname": "combined-two.kafka3-cluster.dev.test",
+        "id": "201"
+      },
+      {
+        "hostname": "combined-three.kafka3-cluster.dev.test",
+        "id": "202"
+      },
+      {
+        "hostname": "controller-four.kafka3-cluster.dev.test",
+        "id": "203"
+      }
+    ],
+    "identitySuffix": "",
+    "credentials": {
+      "cluster": {
+        "password": "kafkaadminpassword"
+      },
+      "writer": {
+        "username": "kafkawriter",
+        "password": "kafkawriterpassword"
+      }
+    },
+    "config": {
+      "retry_backoff_ms": "1000",
+      "retry_backoff_max_ms": "20000"
+    },
+    "jmx": {
+      "broker": {
+        "enabled": true,
+        "port": "8003",
+        "password": "BrokerP4ssw0rd"
+      },
+      "controller": {
+        "enabled": true,
+        "port": "8004",
+        "password": "ControllerP4ssw0rd"
+      }
+    }
+  }
+}

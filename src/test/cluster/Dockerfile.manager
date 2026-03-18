@@ -1,0 +1,14 @@
+FROM rockylinux/rockylinux:9
+RUN dnf install -y iputils freeipa-client wget jq nmap-ncat java-1.8.0-openjdk
+RUN find /etc/systemd/system /usr/lib/systemd/system/{basic,multi-user,sysinit}.target.wants -type l -not -lname /dev/null -delete && systemctl mask systemd-logind.service
+COPY config/config-patch.json /config.json
+COPY config/cluster.properties /cluster.properties
+COPY config/producer.properties /producer.properties
+COPY config/kaf_05/credentials.json /credentials.json
+COPY rpm/kaf_06.rpm /kaf_06.rpm
+RUN rpm -ivh --nodeps /kaf_06.rpm
+COPY files/entrypoint.manager.sh /entrypoint.sh
+COPY files/entrypoint.service /etc/systemd/system/entrypoint.service
+RUN systemctl enable entrypoint.service
+ENTRYPOINT ["/usr/sbin/init"]
+CMD ["--show-status=false"]

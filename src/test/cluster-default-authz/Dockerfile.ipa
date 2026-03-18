@@ -1,0 +1,9 @@
+FROM rockylinux/rockylinux:9
+RUN dnf install -y freeipa-server freeipa-server-dns freeipa-client jq nmap-ncat
+RUN find /etc/systemd/system /usr/lib/systemd/system/{basic,multi-user,sysinit}.target.wants -type l -not -lname /dev/null -delete && systemctl mask systemd-logind.service && ln -s /usr/lib/systemd/system/dbus-broker.service /usr/lib/systemd/system/dbus.service
+COPY config/ /config
+COPY files/entrypoint.service /etc/systemd/system/entrypoint.service
+COPY files/entrypoint.ipa.sh /entrypoint.sh
+RUN systemctl enable entrypoint.service
+ENTRYPOINT ["/usr/sbin/init"]
+CMD ["--show-status=false"]
