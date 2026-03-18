@@ -1,0 +1,171 @@
+services:
+  # ipa
+  ipa:
+    hostname: 'ipa.kafka3-default-authz-cluster.dev.test'
+    container_name: 'ipa'
+    build:
+      context: './'
+      dockerfile: './Dockerfile.ipa'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      kafka3-default-authz-cluster.dev.test:
+        ipv4_address: 192.168.121.100
+        ipv6_address: fd23:4567:789a:1::100
+    privileged: true
+    tty: true
+    volumes:
+      - shared:/shared
+      - type: tmpfs
+        target: /run
+    env_file:
+      - "files/settings.env"
+
+  # broker-one
+  broker-one:
+    hostname: 'broker-one.kafka3-default-authz-cluster.dev.test'
+    container_name: 'broker-one'
+    build:
+      context: './'
+      dockerfile: './Dockerfile.cluster'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      kafka3-default-authz-cluster.dev.test:
+        ipv4_address: 192.168.121.101
+        ipv6_address: fd23:4567:789a:1::101
+    privileged: true
+    tty: true
+    volumes:
+      - shared:/shared
+      - type: tmpfs
+        target: /run
+    env_file:
+      - "files/settings.env"
+
+  # combined-two
+  combined-two:
+    hostname: 'combined-two.kafka3-default-authz-cluster.dev.test'
+    container_name: 'combined-two'
+    build:
+      context: './'
+      dockerfile: './Dockerfile.cluster'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      kafka3-default-authz-cluster.dev.test:
+        ipv4_address: 192.168.121.102
+        ipv6_address: fd23:4567:789a:1::102
+    privileged: true
+    tty: true
+    volumes:
+      - shared:/shared
+      - type: tmpfs
+        target: /run
+    env_file:
+      - "files/settings.env"
+
+  # combined-three
+  combined-three:
+    hostname: 'combined-three.kafka3-default-authz-cluster.dev.test'
+    container_name: 'combined-three'
+    build:
+      context: './'
+      dockerfile: './Dockerfile.cluster'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      kafka3-default-authz-cluster.dev.test:
+        ipv4_address: 192.168.121.103
+        ipv6_address: fd23:4567:789a:1::103
+    privileged: true
+    tty: true
+    volumes:
+      - shared:/shared
+      - type: tmpfs
+        target: /run
+    env_file:
+      - "files/settings.env"
+
+  # controller-four
+  controller-four:
+    hostname: 'controller-four.kafka3-default-authz-cluster.dev.test'
+    container_name: 'controller-four'
+    build:
+      context: './'
+      dockerfile: './Dockerfile.cluster'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      kafka3-default-authz-cluster.dev.test:
+        ipv4_address: 192.168.121.104
+        ipv6_address: fd23:4567:789a:1::104
+    privileged: true
+    tty: true
+    volumes:
+      - shared:/shared
+      - type: tmpfs
+        target: /run
+    env_file:
+      - "files/settings.env"
+
+  # manager
+  manager:
+    hostname: 'manager.kafka3-default-authz-cluster.dev.test'
+    container_name: 'manager'
+    build:
+      context: './'
+      dockerfile: './Dockerfile.manager'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      kafka3-default-authz-cluster.dev.test:
+        ipv4_address: 192.168.121.105
+        ipv6_address: fd23:4567:789a:1::105
+    privileged: true
+    tty: true
+    volumes:
+      - shared:/shared
+      - type: tmpfs
+        target: /run
+      - ${RUNNER_TEMP}:/return
+    env_file:
+      - "files/settings.env"
+
+# Shared volume for the shared files
+volumes:
+  shared:
+    driver: local
+    driver_opts:
+      type: "tmpfs"
+      device: "tmpfs"
+
+# Network
+networks:
+  kafka3-default-authz-cluster.dev.test:
+    name: kafka3-default-authz-cluster.dev.test
+    enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+       - subnet: 192.168.121.0/24
+       - subnet: fd23:4567:789a:1::/64
+         gateway: fd23:4567:789a:1::1

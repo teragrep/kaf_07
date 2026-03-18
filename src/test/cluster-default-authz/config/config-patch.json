@@ -1,0 +1,58 @@
+{
+  "kaf_06": {
+    "keytabs": {
+      "domain": "KAFKA3-DEFAULT-AUTHZ-CLUSTER.DEV.TEST"
+    }
+  },
+  "kafka": {
+    "cluster": {
+      "id": "ZmRjYjk3YTE4YWQ4NDE1NW"
+    },
+    "brokers": [
+      {
+        "hostname": "broker-one.kafka3-default-authz-cluster.dev.test",
+        "id": "101"
+      },
+      {
+        "hostname": "combined-two.kafka3-default-authz-cluster.dev.test",
+        "id": "102"
+      },
+      {
+        "hostname": "combined-three.kafka3-default-authz-cluster.dev.test",
+        "id": "103"
+      }
+    ],
+    "controllers": [
+      {
+        "hostname": "combined-two.kafka3-default-authz-cluster.dev.test",
+        "id": "201"
+      },
+      {
+        "hostname": "combined-three.kafka3-default-authz-cluster.dev.test",
+        "id": "202"
+      },
+      {
+        "hostname": "controller-four.kafka3-default-authz-cluster.dev.test",
+        "id": "203"
+      }
+    ],
+    "identitySuffix": "",
+    "credentials": {
+      "cluster": {
+        "password": "kafkaadminpassword"
+      },
+      "writer": {
+        "username": "kafkawriter",
+        "password": "kafkawriterpassword"
+      }
+    },
+    "config": {
+      "retry_backoff_ms": "1000",
+      "retry_backoff_max_ms": "20000"
+    },
+    "authz": {
+      "use_custom_jaas": true,
+      "custom_jaas": "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"custom-admin\" password=\"admin-pass\" user_custom-user=\"user-pass\""
+    }
+  }
+}
