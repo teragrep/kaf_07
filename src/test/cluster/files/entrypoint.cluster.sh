@@ -19,6 +19,10 @@ mv -f /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/config/confi
 echo "Running /var/cfengine/bin/cf-agent";
 /var/cfengine/bin/cf-agent -KIf /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/install_kaf_07.cf -b install_kaf_07:install_kaf_07;
 
+
+# Explicitly set java 8 as default once packages have been installed
+update-alternatives --set java java-1.8.0-openjdk.x86_64;
+
 # Fix parent directory permissions
 echo "Fixing parent directory permissions";
 chown srv-kaf_07:srv-kaf_07 /opt/teragrep/kafka;
