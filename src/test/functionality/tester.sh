@@ -170,6 +170,21 @@ if grep "Environment=KAFKA_JMX_OPTS=" /usr/lib/systemd/system/kaf_06-controller.
     exit 1;
 fi;
 
+# Check if JAVA_HOME was set properly
+EXPECTED_JAVA_HOME="$(jq --raw-output '.kafka.java_home' /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/config/config.json)";
+if [ "${EXPECTED_JAVA_HOME}" == "" ]; then
+    echo "Failed to find value for java_home from configuration, failing";
+    exit 1;
+fi;
+echo "Checking if JAVA_HOME '${EXPECTED_JAVA_HOME}' was set properly in service files";
+for role in broker controller; do
+    echo "Checking for JAVA_HOME in service file for role ${role}";
+    if ! grep "Environment=JAVA_HOME=\"${EXPECTED_JAVA_HOME}\"" "/usr/lib/systemd/system/kaf_06-${role}.service"; then
+        echo "Failed to find correct JAVA_HOME for role '${role}', failing";
+        exit 1;
+    fi;
+done;
+
 # All is good
 echo "Everything seems fine!";
 exit 0;

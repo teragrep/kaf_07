@@ -1,5 +1,5 @@
 FROM rockylinux/rockylinux:9
-RUN dnf install -y iputils freeipa-client wget jq nmap-ncat
+RUN dnf install -y iputils freeipa-client wget jq nmap-ncat java-1.8.0-openjdk
 RUN find /etc/systemd/system /usr/lib/systemd/system/{basic,multi-user,sysinit}.target.wants -type l -not -lname /dev/null -delete && systemctl mask systemd-logind.service
 COPY rpm/cfengine.rpm /cfengine.rpm
 COPY rpm/kaf_07.rpm /kaf_07.rpm

@@ -1,0 +1,5 @@
+= Upgrading from 1.1.x to 1.2.0
+
+Upgrade configuration to contain path to `JAVA_HOME`:
+
+`jq '.kafka.java_home="/usr/lib/jvm/jre-11-openjdk"' config.json`

@@ -19,6 +19,10 @@ mv -f /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/config/confi
 echo "Running /var/cfengine/bin/cf-agent";
 /var/cfengine/bin/cf-agent -KIf /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/install_kaf_07.cf -b install_kaf_07:install_kaf_07;
 
+
+# Explicitly set java 8 as default once packages have been installed
+update-alternatives --set java java-1.8.0-openjdk.x86_64;
+
 # Fix parent directory permissions
 echo "Fixing parent directory permissions";
 chown srv-kaf_07:srv-kaf_07 /opt/teragrep/kafka;
@@ -45,5 +49,23 @@ fi;
 # Wait for last signal to accept everything is done
 echo "Waiting for connections to signal we are done here";
 nc --verbose --recv-only --listen --source-port 12345;
+
+# Stop services
+echo "Stopping kafka service(s)";
+if [[ "$(hostname)" =~ ^broker.* ]]; then
+    echo "Stopping broker only";
+    systemctl stop kaf_06-broker;
+fi;
+if [[ "$(hostname)" =~ ^combined.* ]]; then
+    echo "Stopping both broker and controller";
+    systemctl stop kaf_06-broker;
+    sleep 5;
+    systemctl stop kaf_06-controller;
+fi;
+if [[ "$(hostname)" =~ ^controller.* ]]; then
+    echo "Stopping controller only";
+    sleep 5;
+    systemctl stop kaf_06-controller;
+fi;
 
 systemctl start poweroff.target;

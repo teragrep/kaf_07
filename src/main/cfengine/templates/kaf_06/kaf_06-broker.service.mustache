@@ -13,6 +13,7 @@ TasksMax=infinity
 OOMScoreAdjust=-500
 User=srv-kaf_07
 WorkingDirectory={{{kaf_06.dirs.workdir}}}
+Environment=JAVA_HOME="{{{kafka.java_home}}}"
 Environment=KAFKA_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:G1HeapRegionSize=16M -XX:MinMetaspaceFreeRatio=50 -XX:MaxMetaspaceFreeRatio=80 -XX:+DisableExplicitGC -Djava.awt.headless=true"
 {{#kafka.authz.use_custom_jaas}}
 Environment=CLASSPATH={{{kaf_05.jar}}}
