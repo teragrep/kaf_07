@@ -171,7 +171,7 @@ if grep "Environment=KAFKA_JMX_OPTS=" /usr/lib/systemd/system/kaf_06-controller.
 fi;
 
 # Check if JAVA_HOME was set properly
-EXPECTED_JAVA_HOME="$(jq '.kafka.java_home' /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/config/config.json)";
+EXPECTED_JAVA_HOME="$(jq --raw-output '.kafka.java_home' /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/config/config.json)";
 if [ "${EXPECTED_JAVA_HOME}" == "" ]; then
     echo "Failed to find value for java_home from configuration, failing";
     exit 1;
