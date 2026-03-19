@@ -50,4 +50,22 @@ fi;
 echo "Waiting for connections to signal we are done here";
 nc --verbose --recv-only --listen --source-port 12345;
 
+# Stop services
+echo "Stopping kafka service(s)";
+if [[ "$(hostname)" =~ ^broker.* ]]; then
+    echo "Stopping broker only";
+    systemctl stop kaf_06-broker;
+fi;
+if [[ "$(hostname)" =~ ^combined.* ]]; then
+    echo "Stopping both broker and controller";
+    systemctl stop kaf_06-broker;
+    sleep 5;
+    systemctl stop kaf_06-controller;
+fi;
+if [[ "$(hostname)" =~ ^controller.* ]]; then
+    echo "Stopping controller only";
+    sleep 5;
+    systemctl stop kaf_06-controller;
+fi;
+
 systemctl start poweroff.target;
