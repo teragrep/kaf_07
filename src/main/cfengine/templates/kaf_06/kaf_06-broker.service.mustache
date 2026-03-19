@@ -23,7 +23,7 @@ Environment=CLASSPATH={{{kaf_04.jar}}}:{{{kaf_05.jar}}}
 Environment=KAFKA_OPTS=-Djava.security.auth.login.config={{{kaf_06.dirs.etc}}}/kafka.jaas.conf
 Environment=KAFKA_LOG4J_OPTS=-Dlog4j.configuration=file:{{{kaf_06.dirs.etc}}}/log4j-broker.properties
 Environment=KAFKA_HEAP_OPTS="{{{kafka.heap_opts}}}"
-Environment=KAFKA_GC_LOG_OPTS="-Xloggc:{{{kaf_06.dirs.logs}}}/{{{injected.role}}}/kafkaServer-gc.log -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=10M"
+Environment=KAFKA_GC_LOG_OPTS="-Xloggc:{{{kaf_06.dirs.logs}}}/{{{injected.role}}}/kafkaServer-gc.log -verbose:gc"
 {{#kafka.jmx.broker.enabled}}
 Environment=KAFKA_JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port={{{kafka.jmx.broker.port}}} -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.password.file={{{kaf_06.dirs.etc}}}/jmxremote-broker.password -Dcom.sun.management.jmxremote.access.file={{{kaf_06.dirs.etc}}}/jmxremote-broker.access"
 {{/kafka.jmx.broker.enabled}}
