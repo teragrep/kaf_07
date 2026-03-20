@@ -109,7 +109,7 @@ bundle agent install_handler {
 
 bundle agent install_rpm(rpm) {
   vars:
-      "$(rpm)_version" string => execresult("/bin/rpm -qp $(this.promise_dirname)/rpm/$(rpm).rpm", "noshell"),
+      "$(rpm)_version" string => execresult("/bin/rpm -qp $(this.promise_dirname)/rpm/$(rpm).rpm --nosignature", "noshell"),
         handle => "$(rpm)_version_check_done",
         if => fileexists("$(this.promise_dirname)/rpm/$(rpm).rpm");
   classes:
