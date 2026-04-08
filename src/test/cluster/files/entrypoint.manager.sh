@@ -1,20 +1,12 @@
 #!/bin/bash
-IPA_CLIENT_FLAGS="${IPA_CLIENT_FLAGS:---force-join}"
-
-while ! nc -z "${IPA_SERVER_HOSTNAME}" 1337; do
-    sleep 1;
-done;
-
-# shellcheck disable=SC2086 # Client flags are intentionally without quotes.
-ipa-client-install --server "${IPA_SERVER_HOSTNAME}" --domain "${IPA_DOMAIN,,}" --unattended --no-ntp --principal "admin@${IPA_DOMAIN^^}" --password "${IPA_ADMIN_PASSWORD}" ${IPA_CLIENT_FLAGS};
-
+set -e;
 PREFIX="192.168.122";
 
 KAFKA_HOSTS="${PREFIX}.101:9093,${PREFIX}.102:9093,${PREFIX}.103:9093";
 
 # Generating jaas files
 echo "Creating jaas files";
-mkdir /jaas
+mkdir /jaas;
 
 # Generic users
 while read -r line; do
@@ -125,7 +117,10 @@ if ! [[ "${MESSAGE}" =~ "Created topic make-writer-topic" ]]; then
 fi;
 
 echo "Trying to create a topic with users permissions";
-MESSAGE="$(KAFKA_OPTS="-Djava.security.auth.login.config=/jaas/normal-user.user.jaas.conf" timeout -v 10s /opt/teragrep/kaf_06/bin/kafka-topics.sh --create --topic "should-not-be-created" --partitions 3 --replication-factor 3 --bootstrap-server "${KAFKA_HOSTS}" --command-config /producer.properties 2>&1;)";
+if MESSAGE="$(KAFKA_OPTS="-Djava.security.auth.login.config=/jaas/normal-user.user.jaas.conf" timeout -v 10s /opt/teragrep/kaf_06/bin/kafka-topics.sh --create --topic "should-not-be-created" --partitions 3 --replication-factor 3 --bootstrap-server "${KAFKA_HOSTS}" --command-config /producer.properties 2>&1;)"; then
+    echo "User should not be able to create topic, failing";
+    exit 1;
+fi;
 echo "Got content: ${MESSAGE}";
 if ! [[ "${MESSAGE}" =~ "TopicAuthorizationException: Authorization failed" ]]; then
     echo "User should not be able to make a topic, failing";

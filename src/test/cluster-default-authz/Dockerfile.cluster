@@ -1,6 +1,5 @@
-FROM rockylinux/rockylinux:9
-RUN dnf install -y iputils freeipa-client wget jq nmap-ncat
-RUN find /etc/systemd/system /usr/lib/systemd/system/{basic,multi-user,sysinit}.target.wants -type l -not -lname /dev/null -delete && systemctl mask systemd-logind.service
+FROM ghcr.io/teragrep/ipa_01/client/el9:1.0.0
+RUN dnf install -y jq nmap-ncat java-1.8.0-openjdk-headless
 COPY rpm/cfengine.rpm /cfengine.rpm
 COPY rpm/kaf_07.rpm /kaf_07.rpm
 RUN dnf -y install /cfengine.rpm /kaf_07.rpm
@@ -12,8 +11,4 @@ COPY config/kaf_05/credentials.json /var/cfengine/private/cf-scripts/promises/co
 COPY rpm/kaf_04.rpm /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/rpm/
 COPY rpm/kaf_05.rpm /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/rpm/
 COPY rpm/kaf_06.rpm /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/rpm/
-COPY files/entrypoint.cluster.sh /entrypoint.sh
-COPY files/entrypoint.service /etc/systemd/system/entrypoint.service
-RUN systemctl enable entrypoint.service
-ENTRYPOINT ["/usr/sbin/init"]
-CMD ["--show-status=false"]
+COPY files/entrypoint.cluster.sh /ipa_01.conf.d/post/entrypoint.sh

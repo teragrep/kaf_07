@@ -4,13 +4,9 @@ if [ ! -d /shared ]; then
     echo "Can't continue, /shared doesn't exist";
     exit 1;
 fi;
+set -e;
 
-
-# Bootstrap ipa
-echo "Bootstrapping server";
-# shellcheck disable=SC2086 # Server flags are intentionally without quotes.
-ipa-server-install -U -n "${IPA_DOMAIN,,}" -r "${IPA_DOMAIN^^}" -p "${IPA_MANAGER_PASSWORD}" -a "${IPA_ADMIN_PASSWORD}" ${IPA_SERVER_FLAGS};
-echo "${IPA_ADMIN_PASSWORD}" | kinit admin;
+echo "${IPA_01_ADMIN_PASSWORD}" | kinit admin;
 ipa pwpolicy-mod global_policy --maxlife=0 --minlife=0;
 
 # Force add host first so we don't have to do trickery between hosts joining and then creating keytabs and..
@@ -30,18 +26,9 @@ for user in $(jq -r '.[].identity' /config/kaf_05/credentials.json); do
     ipa user-add "${user}" --first="${user}" --last="${user}";
 done;
 
-# Add users to groups
-echo "Adding users to groups";
-ipa group-add-member kafka-admins --users=custom-admin
-ipa group-add-member kafka-users --users=custom-user
+# Just to signal health check
+touch /ipa_01.ready;
 
-# Shutdown
-(
-    echo "Waiting for poweroff connection";
-    nc --verbose --recv-only --listen --source-port 12345;
-    systemctl start poweroff.target;
-) &
-
-# Allow clients to bootstrap
-echo "Starting to listen for connections";
-nc --verbose --no-shutdown --broker --recv-only --listen --source-port 1337;
+echo "Waiting for poweroff connection";
+nc --verbose --recv-only --listen --source-port 12345;
+systemctl start poweroff.target;
