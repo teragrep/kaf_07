@@ -14,13 +14,13 @@ Installs and configures link:https://github.com/teragrep/kaf_04[kaf_04], link:ht
 |Version
 
 |link:https://github.com/teragrep/kaf_04/[`kaf_04`]
-|link:https://github.com/teragrep/kaf_04/releases[7.0.3 or higher]
+|link:https://github.com/teragrep/kaf_04/releases[7.0.7 or higher]
 
 |link:https://github.com/teragrep/kaf_05/[`kaf_05`]
 |link:https://github.com/teragrep/kaf_05/releases[7.0.3 or higher]
 
 |link:https://github.com/teragrep/kaf_06[`kaf_06`]
-|link:https://github.com/teragrep/kaf_06/releases/tag/3.9.6[3.9.7 or higher]
+|link:https://github.com/teragrep/kaf_06/releases[3.9.7 or higher]
 |===
 
 == Documentation

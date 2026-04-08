@@ -26,7 +26,7 @@ jobs:
           for package in kaf_04 kaf_05 kaf_06; do
             gh release download --repo "teragrep/${package}" --output "src/test/${{ matrix.test }}/rpm/${package}.rpm" --pattern "*.rpm"
           done;
-          wget https://cfengine-package-repos.s3.amazonaws.com/pub/yum/x86_64/cfengine-community-3.21.3-1.el7.x86_64.rpm -O "src/test/${{ matrix.test }}/rpm/cfengine.rpm"
+          wget --quiet https://cfengine-package-repos.s3.amazonaws.com/pub/yum/x86_64/cfengine-community-3.21.3-1.el7.x86_64.rpm --output-document "src/test/${{ matrix.test }}/rpm/cfengine.rpm"
         env:
           GH_TOKEN: ${{ github.token }}
 
