@@ -28,4 +28,4 @@ done;
 
 # All is good
 echo "Everything seems fine!";
-exit 0;
+systemctl exit 0;

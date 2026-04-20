@@ -1,9 +1,8 @@
-FROM rockylinux/rockylinux:9
+FROM ghcr.io/teragrep/cfp_01/systemd/el9:1.0.0
 
 # Install dependencies
-COPY rpm/cfengine.rpm /cfengine.rpm
 COPY rpm/kaf_07.rpm /kaf_07.rpm
-RUN dnf -y install /cfengine.rpm /kaf_07.rpm jq nmap-ncat
+RUN dnf -y install /kaf_07.rpm jq nmap-ncat
 
 # Patch configs
 COPY config/config-patch.json /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/config/config-patch.json
@@ -17,9 +16,4 @@ COPY rpm/kaf_05.rpm /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_0
 COPY rpm/kaf_06.rpm /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/rpm/
 
 # Bootstrap
-COPY tester.sh /tester.sh
-RUN chmod +x /tester.sh
-
-# Run
-ENTRYPOINT ["/tester.sh"]
-CMD [""]
+COPY cfp_01.entrypoint.sh /cfp_01.entrypoint.sh

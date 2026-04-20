@@ -1,8 +1,7 @@
-FROM ghcr.io/teragrep/ipa_01/client/el9:1.0.0
+FROM ghcr.io/teragrep/cfp_01/systemd-ipa/el9:1.0.0
 RUN dnf install -y jq nmap-ncat java-1.8.0-openjdk-headless
-COPY rpm/cfengine.rpm /cfengine.rpm
 COPY rpm/kaf_07.rpm /kaf_07.rpm
-RUN dnf -y install /cfengine.rpm /kaf_07.rpm
+RUN dnf -y install /kaf_07.rpm
 COPY config/config-patch.json /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/config/config-patch.json
 RUN jq -s '.[0] * .[1]' /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/config/config.json.example /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/config/config-patch.json > /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/config/config.json
 COPY config/kaf_04/authorize.json /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/config/kaf_04/authorize.json
@@ -10,4 +9,4 @@ COPY config/kaf_05/credentials.json /var/cfengine/private/cf-scripts/promises/co
 COPY rpm/kaf_04.rpm /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/rpm/
 COPY rpm/kaf_05.rpm /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/rpm/
 COPY rpm/kaf_06.rpm /var/cfengine/private/cf-scripts/promises/com.teragrep-kaf_07/rpm/
-COPY files/entrypoint.cluster.sh /ipa_01.conf.d/post/entrypoint.sh
+COPY files/entrypoint.cluster.sh /cfp_01.entrypoint.sh
