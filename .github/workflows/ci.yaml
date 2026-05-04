@@ -41,4 +41,4 @@ jobs:
 
       - name: Run test
         timeout-minutes: 3
-        run: podman run --privileged --tty --interactive "${{ matrix.test }}:latest"
+        run: podman run --tty --interactive "${{ matrix.test }}:latest"
